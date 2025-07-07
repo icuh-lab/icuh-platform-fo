@@ -19,7 +19,7 @@ export function SearchPage() {
     setResults([
       {
         id: 1,
-        title: '한국농어촌공사_가뭄지도 정보',
+        title: '한국농어촌공사_가뭄지도 정보222',
         provider: '한국농어촌공사',
         manager: '수질원',
         date: '2025-03-13',
