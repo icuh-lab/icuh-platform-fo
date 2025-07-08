@@ -6,6 +6,7 @@ import {
   Navigate,
 } from 'react-router'
 import { SearchPage } from './pages/SearchPage'
+import { SearchResultsPage } from './pages/SearchResultsPage'
 import { DetailView } from './components/DetailView'
 import { CreateForm } from './components/CreateForm'
 
@@ -14,6 +15,7 @@ export function App() {
     <Router>
       <Routes>
         <Route path="/" element={<SearchPage />} />
+        <Route path="/search" element={<SearchResultsPage />} />
         <Route path="/create" element={<CreateForm />} />
         <Route
           path="/detail/:id"
