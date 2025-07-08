@@ -12,6 +12,7 @@ export function SearchBar({ onSearch, initialQuery = '' }) {
     onSearch(query)
   }
 
+
   return (
     <form onSubmit={handleSubmit} className="relative w-full">
       <input
