@@ -11,6 +11,7 @@ export function CreateForm() {
     provider: '',
     manager: '',
     description: '',
+    password: '',
     files: [] as File[],
   })
   
@@ -19,56 +20,86 @@ export function CreateForm() {
     provider?: string
     manager?: string
     description?: string
+    password?: string
     files?: string
   }>({})
   
   const [showFileTypeAlert, setShowFileTypeAlert] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const validateForm = () => {
     const newErrors: typeof errors = {}
-    
-    // 제목 검증
     if (!formData.title.trim()) {
       newErrors.title = '파일데이터명을 입력해주세요.'
     } else if (formData.title.trim().length < 2) {
       newErrors.title = '파일데이터명은 2자 이상 입력해주세요.'
     }
-    
-    // 제공기관 검증
     if (!formData.provider.trim()) {
       newErrors.provider = '제공기관을 입력해주세요.'
     }
-    
-    // 관리부서 검증
     if (!formData.manager.trim()) {
       newErrors.manager = '관리부서를 입력해주세요.'
     }
-    
-    // 설명 검증
     if (!formData.description.trim()) {
       newErrors.description = '설명을 입력해주세요.'
     } else if (formData.description.trim().length < 10) {
       newErrors.description = '설명은 10자 이상 입력해주세요.'
     }
-    
-    // 파일 검증
+    if (!formData.password.trim()) {
+      newErrors.password = '임시 비밀번호를 입력해주세요.'
+    } else if (formData.password.trim().length < 4) {
+      newErrors.password = '비밀번호는 4자 이상 입력해주세요.'
+    }
     if (formData.files.length === 0) {
       newErrors.files = '최소 1개 이상의 파일을 업로드해주세요.'
     }
-    
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    
-    if (!validateForm()) {
-      return
+    if (!validateForm()) return
+    setIsSubmitting(true)
+    try {
+      
+      // request 객체 생성
+      const requestPayload = {
+        title: formData.title,
+        description: formData.description,
+        author: formData.provider, // 제공기관
+        authorOrganization: formData.provider, // 제공기관
+        department: formData.manager, // 관리부서
+        tempPassword: formData.password,
+        documentTypeId: 2, // 하드코딩
+        subjectDomainId: 4, // 하드코딩
+        source: '해외', // 하드코딩
+      }
+      // form-data 생성
+      const fd = new FormData()
+      const json = JSON.stringify(requestPayload);
+      const blob = new Blob([json], { type: 'application/json' });
+      
+      fd.append('request', blob)
+      formData.files.forEach(file => {
+        fd.append('files', file)
+      })
+      const res = await fetch('http://localhost:8080/api/v1/articles', {
+        method: 'POST',
+        body: fd,
+      })
+      if (res.ok) {
+        alert('등록이 완료되었습니다!')
+        navigate(-1)
+      } else {
+        const errText = await res.text()
+        alert('등록에 실패했습니다.\n' + errText)
+      }
+    } catch (err) {
+      alert('오류가 발생했습니다. 다시 시도해주세요.')
+    } finally {
+      setIsSubmitting(false)
     }
-    
-    // Handle form submission
-    console.log(formData)
   }
 
   const validateFileType = (file: File) => {
@@ -79,10 +110,8 @@ export function CreateForm() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFiles = Array.from(e.target.files || [])
     const invalidFiles = newFiles.filter(file => !validateFileType(file))
-    
     if (invalidFiles.length > 0) {
       setShowFileTypeAlert(true)
-      // PDF가 아닌 파일은 제외하고 유효한 파일만 추가
       const validFiles = newFiles.filter(file => validateFileType(file))
       setFormData({
         ...formData,
@@ -100,23 +129,18 @@ export function CreateForm() {
     e.preventDefault()
     setIsDragOver(true)
   }
-
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     setIsDragOver(false)
   }
-
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     setIsDragOver(false)
-    
     const newFiles = Array.from(e.dataTransfer.files)
     if (newFiles.length > 0) {
       const invalidFiles = newFiles.filter(file => !validateFileType(file))
-      
       if (invalidFiles.length > 0) {
         setShowFileTypeAlert(true)
-        // PDF가 아닌 파일은 제외하고 유효한 파일만 추가
         const validFiles = newFiles.filter(file => validateFileType(file))
         setFormData({
           ...formData,
@@ -130,18 +154,15 @@ export function CreateForm() {
       }
     }
   }
-
   const handleFileSelect = () => {
     fileInputRef.current?.click()
   }
-
   const removeFile = (index: number) => {
     setFormData({
       ...formData,
       files: formData.files.filter((_, i) => i !== index),
     })
   }
-
   const removeAllFiles = () => {
     setFormData({
       ...formData,
@@ -151,7 +172,6 @@ export function CreateForm() {
       fileInputRef.current.value = ''
     }
   }
-
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes'
     const k = 1024
@@ -159,7 +179,6 @@ export function CreateForm() {
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
-
   const clearFieldError = (field: keyof typeof errors) => {
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }))
@@ -169,8 +188,6 @@ export function CreateForm() {
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
       <h1 className="text-2xl font-medium mb-8">새 데이터 등록</h1>
-      
-      {/* 파일 형식 경고 알림 */}
       {showFileTypeAlert && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
           <div className="flex items-start">
@@ -193,7 +210,6 @@ export function CreateForm() {
           </div>
         </div>
       )}
-      
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -217,7 +233,6 @@ export function CreateForm() {
             <p className="mt-1 text-sm text-red-600">{errors.title}</p>
           )}
         </div>
-        
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             제공기관
@@ -240,7 +255,6 @@ export function CreateForm() {
             <p className="mt-1 text-sm text-red-600">{errors.provider}</p>
           )}
         </div>
-        
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             관리부서
@@ -263,7 +277,6 @@ export function CreateForm() {
             <p className="mt-1 text-sm text-red-600">{errors.manager}</p>
           )}
         </div>
-        
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             설명
@@ -285,7 +298,34 @@ export function CreateForm() {
             <p className="mt-1 text-sm text-red-600">{errors.description}</p>
           )}
         </div>
-        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            임시 비밀번호
+          </label>
+          <div className="space-y-1">
+            <input
+              type="password"
+              value={formData.password}
+              onChange={(e) => {
+                setFormData({
+                  ...formData,
+                  password: e.target.value,
+                })
+                clearFieldError('password')
+              }}
+              className={`w-full px-3 py-2 border rounded-md ${
+                errors.password ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
+              }`}
+              placeholder="데이터 수정/삭제 시 사용할 비밀번호를 입력하세요"
+            />
+            <p className="text-xs text-gray-500">
+              등록 후 데이터 수정이나 삭제 요청 시 필요합니다. 안전한 곳에 보관해주세요.
+            </p>
+          </div>
+          {errors.password && (
+            <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+          )}
+        </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             파일 업로드
@@ -293,7 +333,6 @@ export function CreateForm() {
           {errors.files && (
             <p className="mb-2 text-sm text-red-600">{errors.files}</p>
           )}
-          
           {formData.files.length === 0 ? (
             <div
               className={`w-full border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -343,7 +382,6 @@ export function CreateForm() {
                   모두 제거
                 </button>
               </div>
-              
               <div className="space-y-3 max-h-60 overflow-y-auto">
                 {formData.files.map((file, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -366,7 +404,6 @@ export function CreateForm() {
                   </div>
                 ))}
               </div>
-              
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <button
                   type="button"
@@ -379,20 +416,21 @@ export function CreateForm() {
             </div>
           )}
         </div>
-        
         <div className="flex justify-end gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
             className="px-4 py-2 border rounded-md hover:bg-gray-50"
+            disabled={isSubmitting}
           >
             취소
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            disabled={isSubmitting}
           >
-            등록하기
+            {isSubmitting ? '등록 중...' : '등록하기'}
           </button>
         </div>
       </form>

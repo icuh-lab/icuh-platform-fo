@@ -9,6 +9,8 @@ interface ResultItemProps {
 
 export function ResultItem({ data, filters }: ResultItemProps) {
   const navigate = useNavigate()
+  // 확장자 중복 제거
+  const uniqueExtensions = Array.from(new Set(data.extensions))
   return (
     <div className="py-6 first:pt-0 border-t border-gray-100 first:border-0">
       <div className="mb-3">
@@ -19,7 +21,7 @@ export function ResultItem({ data, filters }: ResultItemProps) {
           {data.title}
         </h3>
         <div className="flex gap-1">
-          {data.extensions.map((extension) => (
+          {uniqueExtensions.map((extension) => (
             <span key={extension} className="text-xs text-gray-500">
               {extension.toUpperCase()}
             </span>
@@ -32,7 +34,7 @@ export function ResultItem({ data, filters }: ResultItemProps) {
         <div>조회수: {data.views}</div>
       </div>
       <div className="flex gap-2">
-        {data.extensions.map((extension) => (
+        {uniqueExtensions.map((extension) => (
           <span
             key={extension}
             className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded"
@@ -40,7 +42,6 @@ export function ResultItem({ data, filters }: ResultItemProps) {
             {extension.toUpperCase()}
           </span>
         ))}
-        
         {/* 필터 태그 표시 */}
         {filters && Object.entries(filters).filter(([_, value]) => value !== '').map(([type, value]) => {
           const getTagColor = (filterType: string) => {
