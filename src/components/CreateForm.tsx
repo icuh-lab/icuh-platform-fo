@@ -1,25 +1,199 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { UploadIcon, FileIcon, XIcon, AlertCircleIcon } from 'lucide-react'
 
 export function CreateForm() {
   const navigate = useNavigate()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
-    description: '',
     provider: '',
     manager: '',
-    category: '',
-    formats: [],
-    updateFrequency: '',
+    description: '',
+    files: [] as File[],
   })
-  const handleSubmit = (e) => {
+  
+  const [errors, setErrors] = useState<{
+    title?: string
+    provider?: string
+    manager?: string
+    description?: string
+    files?: string
+  }>({})
+  
+  const [showFileTypeAlert, setShowFileTypeAlert] = useState(false)
+
+  const validateForm = () => {
+    const newErrors: typeof errors = {}
+    
+    // 제목 검증
+    if (!formData.title.trim()) {
+      newErrors.title = '파일데이터명을 입력해주세요.'
+    } else if (formData.title.trim().length < 2) {
+      newErrors.title = '파일데이터명은 2자 이상 입력해주세요.'
+    }
+    
+    // 제공기관 검증
+    if (!formData.provider.trim()) {
+      newErrors.provider = '제공기관을 입력해주세요.'
+    }
+    
+    // 관리부서 검증
+    if (!formData.manager.trim()) {
+      newErrors.manager = '관리부서를 입력해주세요.'
+    }
+    
+    // 설명 검증
+    if (!formData.description.trim()) {
+      newErrors.description = '설명을 입력해주세요.'
+    } else if (formData.description.trim().length < 10) {
+      newErrors.description = '설명은 10자 이상 입력해주세요.'
+    }
+    
+    // 파일 검증
+    if (formData.files.length === 0) {
+      newErrors.files = '최소 1개 이상의 파일을 업로드해주세요.'
+    }
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    
+    if (!validateForm()) {
+      return
+    }
+    
     // Handle form submission
     console.log(formData)
   }
+
+  const validateFileType = (file: File) => {
+    const allowedTypes = ['application/pdf']
+    return allowedTypes.includes(file.type)
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(e.target.files || [])
+    const invalidFiles = newFiles.filter(file => !validateFileType(file))
+    
+    if (invalidFiles.length > 0) {
+      setShowFileTypeAlert(true)
+      // PDF가 아닌 파일은 제외하고 유효한 파일만 추가
+      const validFiles = newFiles.filter(file => validateFileType(file))
+      setFormData({
+        ...formData,
+        files: [...formData.files, ...validFiles],
+      })
+    } else {
+      setFormData({
+        ...formData,
+        files: [...formData.files, ...newFiles],
+      })
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    
+    const newFiles = Array.from(e.dataTransfer.files)
+    if (newFiles.length > 0) {
+      const invalidFiles = newFiles.filter(file => !validateFileType(file))
+      
+      if (invalidFiles.length > 0) {
+        setShowFileTypeAlert(true)
+        // PDF가 아닌 파일은 제외하고 유효한 파일만 추가
+        const validFiles = newFiles.filter(file => validateFileType(file))
+        setFormData({
+          ...formData,
+          files: [...formData.files, ...validFiles],
+        })
+      } else {
+        setFormData({
+          ...formData,
+          files: [...formData.files, ...newFiles],
+        })
+      }
+    }
+  }
+
+  const handleFileSelect = () => {
+    fileInputRef.current?.click()
+  }
+
+  const removeFile = (index: number) => {
+    setFormData({
+      ...formData,
+      files: formData.files.filter((_, i) => i !== index),
+    })
+  }
+
+  const removeAllFiles = () => {
+    setFormData({
+      ...formData,
+      files: [],
+    })
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  const clearFieldError = (field: keyof typeof errors) => {
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }))
+    }
+  }
+
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
       <h1 className="text-2xl font-medium mb-8">새 데이터 등록</h1>
+      
+      {/* 파일 형식 경고 알림 */}
+      {showFileTypeAlert && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start">
+            <AlertCircleIcon className="h-5 w-5 text-red-400 mt-0.5 mr-3 flex-shrink-0" />
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-red-800">
+                지원하지 않는 파일 형식
+              </h3>
+              <p className="mt-1 text-sm text-red-700">
+                PDF 파일만 업로드 가능합니다. 다른 형식의 파일은 자동으로 제외되었습니다.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowFileTypeAlert(false)}
+              className="text-red-400 hover:text-red-600"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+      
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -28,132 +202,184 @@ export function CreateForm() {
           <input
             type="text"
             value={formData.title}
-            onChange={(e) =>
+            onChange={(e) => {
               setFormData({
                 ...formData,
                 title: e.target.value,
               })
-            }
-            className="w-full px-3 py-2 border rounded-md"
-            required
+              clearFieldError('title')
+            }}
+            className={`w-full px-3 py-2 border rounded-md ${
+              errors.title ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
+            }`}
           />
+          {errors.title && (
+            <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+          )}
         </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            제공기관
+          </label>
+          <input
+            type="text"
+            value={formData.provider}
+            onChange={(e) => {
+              setFormData({
+                ...formData,
+                provider: e.target.value,
+              })
+              clearFieldError('provider')
+            }}
+            className={`w-full px-3 py-2 border rounded-md ${
+              errors.provider ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
+            }`}
+          />
+          {errors.provider && (
+            <p className="mt-1 text-sm text-red-600">{errors.provider}</p>
+          )}
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            관리부서
+          </label>
+          <input
+            type="text"
+            value={formData.manager}
+            onChange={(e) => {
+              setFormData({
+                ...formData,
+                manager: e.target.value,
+              })
+              clearFieldError('manager')
+            }}
+            className={`w-full px-3 py-2 border rounded-md ${
+              errors.manager ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
+            }`}
+          />
+          {errors.manager && (
+            <p className="mt-1 text-sm text-red-600">{errors.manager}</p>
+          )}
+        </div>
+        
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             설명
           </label>
           <textarea
             value={formData.description}
-            onChange={(e) =>
+            onChange={(e) => {
               setFormData({
                 ...formData,
                 description: e.target.value,
               })
-            }
-            className="w-full px-3 py-2 border rounded-md h-32"
-            required
+              clearFieldError('description')
+            }}
+            className={`w-full px-3 py-2 border rounded-md h-32 ${
+              errors.description ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
+            }`}
           />
+          {errors.description && (
+            <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+          )}
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              제공기관
-            </label>
-            <input
-              type="text"
-              value={formData.provider}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  provider: e.target.value,
-                })
-              }
-              className="w-full px-3 py-2 border rounded-md"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              관리부서
-            </label>
-            <input
-              type="text"
-              value={formData.manager}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  manager: e.target.value,
-                })
-              }
-              className="w-full px-3 py-2 border rounded-md"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              분류체계
-            </label>
-            <select
-              value={formData.category}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  category: e.target.value,
-                })
-              }
-              className="w-full px-3 py-2 border rounded-md"
-              required
-            >
-              <option value="">선택하세요</option>
-              <option value="농림">농림 - 농업·농촌</option>
-              <option value="공공행정">공공행정</option>
-              <option value="환경기상">환경기상</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              갱신주기 (일)
-            </label>
-            <input
-              type="number"
-              value={formData.updateFrequency}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  updateFrequency: e.target.value,
-                })
-              }
-              className="w-full px-3 py-2 border rounded-md"
-              required
-            />
-          </div>
-        </div>
+        
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            제공 포맷
+            파일 업로드
           </label>
-          <div className="flex gap-4">
-            {['CSV', 'JSON', 'XML'].map((format) => (
-              <label key={format} className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.formats.includes(format)}
-                  onChange={(e) => {
-                    const newFormats = e.target.checked
-                      ? [...formData.formats, format]
-                      : formData.formats.filter((f) => f !== format)
-                    setFormData({
-                      ...formData,
-                      formats: newFormats,
-                    })
-                  }}
-                  className="mr-2"
-                />
-                {format}
-              </label>
-            ))}
-          </div>
+          {errors.files && (
+            <p className="mb-2 text-sm text-red-600">{errors.files}</p>
+          )}
+          
+          {formData.files.length === 0 ? (
+            <div
+              className={`w-full border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                isDragOver
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <UploadIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <div className="space-y-2">
+                <p className="text-lg font-medium text-gray-700">
+                  파일을 드래그하여 업로드하거나
+                </p>
+                <p className="text-sm text-gray-500">
+                  클릭하여 파일을 선택하세요 (PDF 파일만 가능)
+                </p>
+                <button
+                  type="button"
+                  onClick={handleFileSelect}
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  파일 선택
+                </button>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileChange}
+                className="hidden"
+                multiple
+              />
+            </div>
+          ) : (
+            <div className="w-full border border-gray-300 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-gray-900">
+                  선택된 파일 ({formData.files.length}개)
+                </h3>
+                <button
+                  type="button"
+                  onClick={removeAllFiles}
+                  className="text-sm text-red-600 hover:text-red-800"
+                >
+                  모두 제거
+                </button>
+              </div>
+              
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {formData.files.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <FileIcon className="h-6 w-6 text-blue-500" />
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">{file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={handleFileSelect}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  + 파일 추가
+                </button>
+              </div>
+            </div>
+          )}
         </div>
+        
         <div className="flex justify-end gap-3">
           <button
             type="button"
