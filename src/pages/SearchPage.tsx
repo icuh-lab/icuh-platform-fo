@@ -2,42 +2,76 @@ import React, { useState } from 'react'
 import { SearchBar } from '../components/SearchBar'
 import { SearchFilters } from '../components/SearchFilters'
 import { SearchResults } from '../components/SearchResults'
+import type { SearchFilters as SearchFiltersType, SearchResult } from '../types/search'
+import { searchData, getMockSearchResults } from '../services/searchService'
 
 export function SearchPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<SearchFiltersType>({
     documentType: '',
     subjectDomain: '',
     source: '',
   })
-  const [results, setResults] = useState([])
+  const [results, setResults] = useState<SearchResult[]>([])
   const [hasSearched, setHasSearched] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   
-  const handleSearch = (query) => {
+  const handleSearch = async (query: string) => {
     setSearchQuery(query)
     setHasSearched(true)
-    // Mock search results
-    // setResults([
-    //   {
-    //     id: 1,
-    //     title: '한국농어촌공사_가뭄지도 정보222',
-    //     provider: '한국농어촌공사',
-    //     manager: '수질원',
-    //     date: '2025-03-13',
-    //     views: 6260,
-    //     downloads: 3310,
-    //     updateFrequency: 18,
-    //     keywords: '농업용수,저수지수위,가뭄정보',
-    //     formats: ['CSV', 'JSON', 'XML'],
-    //   },
-    //   // ... rest of mock data
-    // ])
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      // 서버 요청을 위한 파라미터 구성
+      const searchRequest = {
+        query: query || undefined,
+        documentType: filters.documentType || undefined,
+        subjectDomain: filters.subjectDomain || undefined,
+        source: filters.source || undefined,
+      }
+      
+      // 실제 서버 요청 (개발 중에는 mock 데이터 사용)
+      const response = await searchData(searchRequest)
+      // const response = getMockSearchResults(searchRequest)
+      setResults(response.data)
+    } catch (err) {
+      setError('검색 중 오류가 발생했습니다.')
+      console.error('Search error:', err)
+    } finally {
+      setIsLoading(false)
+    }
   }
-  const handleFilterChange = (filterType, value) => {
-    setFilters({
+  
+  const handleFilterChange = async (filterType: keyof SearchFiltersType, value: string) => {
+    const newFilters = {
       ...filters,
       [filterType]: value,
-    })
+    }
+    setFilters(newFilters)
+    
+    // 검색어가 있고 이미 검색한 상태라면 필터 변경 시 자동으로 재검색
+    if (searchQuery && hasSearched) {
+      setIsLoading(true)
+      setError(null)
+      
+      try {
+        const searchRequest = {
+          query: searchQuery || undefined,
+          documentType: newFilters.documentType || undefined,
+          subjectDomain: newFilters.subjectDomain || undefined,
+          source: newFilters.source || undefined,
+        }
+        const response = await searchData(searchRequest)
+        setResults(response.data)
+      } catch (err) {
+        setError('검색 중 오류가 발생했습니다.')
+        console.error('Search error:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
   }
   const handleReset = () => {
     setSearchQuery('')
@@ -65,7 +99,13 @@ export function SearchPage() {
           <div className="max-w-6xl mx-auto">
             <SearchBar onSearch={handleSearch} />
             <SearchFilters filters={filters} onFilterChange={handleFilterChange} onReset={handleReset} />
-            <SearchResults query={searchQuery} results={results} filters={filters} />
+            <SearchResults 
+              query={searchQuery} 
+              results={results} 
+              filters={filters} 
+              isLoading={isLoading}
+              error={error}
+            />
           </div>
         </div>
       )}

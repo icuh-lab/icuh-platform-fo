@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import { SearchIcon } from 'lucide-react'
 
-export function SearchBar({ onSearch, initialQuery = '' }) {
+interface SearchBarProps {
+  onSearch: (query: string) => void
+  initialQuery?: string
+}
+
+export function SearchBar({ onSearch, initialQuery = '' }: SearchBarProps) {
   const [query, setQuery] = useState(initialQuery)
   useEffect(() => {
     setQuery(initialQuery)
   }, [initialQuery])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     onSearch(query)
   }
