@@ -6,10 +6,12 @@ export function SearchBar({ onSearch, initialQuery = '' }) {
   useEffect(() => {
     setQuery(initialQuery)
   }, [initialQuery])
+
   const handleSubmit = (e) => {
     e.preventDefault()
     onSearch(query)
   }
+
   return (
     <form onSubmit={handleSubmit} className="relative w-full">
       <input

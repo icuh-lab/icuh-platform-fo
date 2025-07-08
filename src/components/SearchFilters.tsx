@@ -11,30 +11,44 @@ export function SearchFilters({ filters, onFilterChange, onReset }) {
           검색 초기화
       </button>
       <div className="relative">
-        <select className={selectClass} value={filters.category} onChange={(e) => onFilterChange('category', e.target.value)}>
+        <select className={selectClass} value={filters.documentType} onChange={(e) => onFilterChange('documentType', e.target.value)}>
           <option value="">문서 성격</option>
-          <option value="공공행정">공공행정</option>
-          <option value="문화관광">문화관광</option>
-          <option value="환경기상">환경기상</option>
-          <option value="교육">교육</option>
+          <option value="보고서">보고서</option>
+          <option value="조사자료">조사자료</option>
+          <option value="가이드라인">가이드라인</option>
+          <option value="매뉴얼">매뉴얼</option>
+          <option value="통계자료">통계자료</option>
+          <option value="프로그램">프로그램</option>
+          <option value="논문">논문</option>
+          <option value="연구자료">연구자료</option>
+          <option value="기타">기타</option>
         </select>
       </div>
       <div className="relative">
-        <select className={selectClass} value={filters.serviceType} onChange={(e) => onFilterChange('serviceType', e.target.value)}>
+        <select className={selectClass} value={filters.subjectDomain} onChange={(e) => onFilterChange('subjectDomain', e.target.value)}>
           <option value="">주제 영역</option>
-          <option value="파일데이터">파일데이터</option>
-          <option value="오픈API">오픈API</option>
-          <option value="표준데이터">표준데이터</option>
+          <option value="농업">농업</option>
+          <option value="생태계">생태계</option>
+          <option value="에너지">에너지</option>
+          <option value="산불">산불</option>
+          <option value="물 공급 및 수도시설">물 공급 및 수도시설</option>
+          <option value="위생">위생</option>
+          <option value="산업">산업</option>
+          <option value="사회 경제">사회 경제</option>
+          <option value="기후 변화">기후 변화</option>
+          <option value="가뭄진단 및 예경보">가뭄진단 및 예경보</option>
+          <option value="해외">해외</option>
+          <option value="환경">환경</option>
+          <option value="축산업">축산업</option>
+          <option value="수산업">수산업</option>
+          <option value="기타">기타</option>
         </select>
       </div>
       <div className="relative">
-        <select className={selectClass} value={filters.user} onChange={(e) => onFilterChange('user', e.target.value)}>
+        <select className={selectClass} value={filters.source} onChange={(e) => onFilterChange('source', e.target.value)}>
           <option value="">출처</option>
-          <option value="CSV">CSV</option>
-          <option value="JSON">JSON</option>
-          <option value="XML">XML</option>
-          <option value="PDF">PDF</option>
-          <option value="XLS">XLS</option>
+          <option value="국내">국내</option>
+          <option value="해외">해외</option>
         </select>
       </div>
     </div>
