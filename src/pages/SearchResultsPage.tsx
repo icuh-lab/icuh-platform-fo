@@ -51,7 +51,7 @@ export function SearchResultsPage() {
       }
       
       const response = await searchData(searchRequest)
-      setResults(response.data)
+      setResults(response.data.content)
     } catch (err) {
       setError('검색 중 오류가 발생했습니다.')
       console.error('Search error:', err)
