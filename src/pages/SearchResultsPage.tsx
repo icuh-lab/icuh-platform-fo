@@ -112,23 +112,14 @@ export function SearchResultsPage() {
     <div className="w-full py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <button 
-            onClick={handleBackToSearch}
-            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-          >
+          <button onClick={handleBackToSearch}className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
             ← 검색 페이지로 돌아가기
           </button>
         </div>
         
         <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
         <SearchFilters filters={filters} onFilterChange={handleFilterChange} onReset={handleReset} />
-        <SearchResults 
-          query={searchQuery} 
-          results={results} 
-          filters={filters} 
-          isLoading={isLoading}
-          error={error}
-        />
+        <SearchResults query={searchQuery} results={results} filters={filters} isLoading={isLoading} error={error} />
       </div>
     </div>
   )
