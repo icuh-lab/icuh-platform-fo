@@ -8,6 +8,9 @@ export function CreateForm() {
   const [isDragOver, setIsDragOver] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
+    documentType: '', // 추가
+    subjectDomain: '', // 추가
+    source: '', // 출처 추가
     provider: '',
     manager: '',
     description: '',
@@ -17,6 +20,9 @@ export function CreateForm() {
   
   const [errors, setErrors] = useState<{
     title?: string
+    documentType?: string // 추가
+    subjectDomain?: string // 추가
+    source?: string // 출처 추가
     provider?: string
     manager?: string
     description?: string
@@ -33,6 +39,19 @@ export function CreateForm() {
       newErrors.title = '파일데이터명을 입력해주세요.'
     } else if (formData.title.trim().length < 2) {
       newErrors.title = '파일데이터명은 2자 이상 입력해주세요.'
+    }
+    if (!formData.documentType) {
+      newErrors.documentType = '문서 유형을 선택해주세요.'
+    } else if (!documentTypeMap[formData.documentType]) {
+      newErrors.documentType = '올바른 문서 유형을 선택해주세요.'
+    }
+    if (!formData.subjectDomain) {
+      newErrors.subjectDomain = '주제 영역을 선택해주세요.'
+    } else if (!subjectDomainMap[formData.subjectDomain]) {
+      newErrors.subjectDomain = '올바른 주제 영역을 선택해주세요.'
+    }
+    if (!formData.source) {
+      newErrors.source = '출처를 선택해주세요.'
     }
     if (!formData.provider.trim()) {
       newErrors.provider = '제공기관을 입력해주세요.'
@@ -66,14 +85,16 @@ export function CreateForm() {
       // request 객체 생성
       const requestPayload = {
         title: formData.title,
+        documentType: formData.documentType,
+        subjectDomain: formData.subjectDomain,
+        source: formData.source,
         description: formData.description,
         author: formData.provider, // 제공기관
         authorOrganization: formData.provider, // 제공기관
         department: formData.manager, // 관리부서
         tempPassword: formData.password,
-        documentTypeId: 2, // 하드코딩
-        subjectDomainId: 4, // 하드코딩
-        source: '해외', // 하드코딩
+        documentTypeId: documentTypeMap[formData.documentType] || null,
+        subjectDomainId: subjectDomainMap[formData.subjectDomain] || null,
       }
       // form-data 생성
       const fd = new FormData()
@@ -185,6 +206,36 @@ export function CreateForm() {
     }
   }
 
+  // 문서 유형 및 주제 영역 value-ID 매핑
+  const documentTypeMap: Record<string, number> = {
+    report: 1,
+    survey_data: 2,
+    guideline: 3,
+    manual: 4,
+    statistical_data: 5,
+    program: 6,
+    thesis: 7,
+    research_data: 8,
+    others: 9,
+  }
+  const subjectDomainMap: Record<string, number> = {
+    agriculture: 1,
+    ecosystem: 2,
+    energy: 3,
+    wildfire: 4,
+    water_supply: 5,
+    sanitation: 6,
+    industry: 7,
+    socio_economy: 8,
+    climate_change: 9,
+    drought_monitoring: 10,
+    international: 11,
+    environment: 12,
+    livestock: 13,
+    fisheries: 14,
+    others: 15,
+  }
+
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
       <h1 className="text-2xl font-medium mb-8">새 데이터 등록</h1>
@@ -233,6 +284,7 @@ export function CreateForm() {
             <p className="mt-1 text-sm text-red-600">{errors.title}</p>
           )}
         </div>
+      
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             제공기관
@@ -297,6 +349,83 @@ export function CreateForm() {
           {errors.description && (
             <p className="mt-1 text-sm text-red-600">{errors.description}</p>
           )}
+        </div>
+        {/* 문서 유형, 주제 영역, 출처 select 추가 */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="md:w-1/3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">문서 유형</label>
+            <select
+              value={formData.documentType}
+              onChange={e => {
+                setFormData({ ...formData, documentType: e.target.value })
+                clearFieldError('documentType')
+              }}
+              className={`w-full px-3 py-2 border rounded-md bg-white ${errors.documentType ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+            >
+              <option value="">문서 유형 선택</option>
+              <option value="report">보고서</option>
+              <option value="survey_data">조사자료</option>
+              <option value="guideline">가이드라인</option>
+              <option value="manual">매뉴얼</option>
+              <option value="statistical_data">통계자료</option>
+              <option value="program">프로그램</option>
+              <option value="thesis">논문</option>
+              <option value="research_data">연구자료</option>
+              <option value="others">기타</option>
+            </select>
+            {errors.documentType && (
+              <p className="mt-1 text-sm text-red-600">{errors.documentType}</p>
+            )}
+          </div>
+          <div className="md:w-1/3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">주제 영역</label>
+            <select
+              value={formData.subjectDomain}
+              onChange={e => {
+                setFormData({ ...formData, subjectDomain: e.target.value })
+                clearFieldError('subjectDomain')
+              }}
+              className={`w-full px-3 py-2 border rounded-md bg-white ${errors.subjectDomain ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+            >
+              <option value="">주제 영역 선택</option>
+              <option value="agriculture">농업</option>
+              <option value="ecosystem">생태계</option>
+              <option value="energy">에너지</option>
+              <option value="wildfire">산불</option>
+              <option value="water_supply">물 공급 및 수도시설</option>
+              <option value="sanitation">위생</option>
+              <option value="industry">산업</option>
+              <option value="socio_economy">사회 경제</option>
+              <option value="climate_change">기후 변화</option>
+              <option value="drought_monitoring">가뭄진단 및 예경보</option>
+              <option value="international">해외</option>
+              <option value="environment">환경</option>
+              <option value="livestock">축산업</option>
+              <option value="fisheries">수산업</option>
+              <option value="others">기타</option>
+            </select>
+            {errors.subjectDomain && (
+              <p className="mt-1 text-sm text-red-600">{errors.subjectDomain}</p>
+            )}
+          </div>
+          <div className="md:w-1/3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">출처</label>
+            <select
+              value={formData.source}
+              onChange={e => {
+                setFormData({ ...formData, source: e.target.value })
+                clearFieldError('source')
+              }}
+              className={`w-full px-3 py-2 border rounded-md bg-white ${errors.source ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+            >
+              <option value="">출처 선택</option>
+              <option value="domestic">국내</option>
+              <option value="foreign">해외</option>
+            </select>
+            {errors.source && (
+              <p className="mt-1 text-sm text-red-600">{errors.source}</p>
+            )}
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
