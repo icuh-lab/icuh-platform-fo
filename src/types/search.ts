@@ -11,6 +11,9 @@ export interface SearchResult {
   updatedAt: string
   views: number
   extensions: string[]
+  documentType: string
+  subjectDomain: string
+  source: string
 }
 
 export interface SearchRequest {
