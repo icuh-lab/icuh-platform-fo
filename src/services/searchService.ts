@@ -11,6 +11,8 @@ export async function searchData(request: SearchRequest): Promise<SearchResponse
     if (request.documentType) params.append('documentType', request.documentType)
     if (request.subjectDomain) params.append('subjectDomain', request.subjectDomain)
     if (request.source) params.append('source', request.source)
+    if (typeof request.page !== 'undefined') params.append('page', String(request.page))
+    if (typeof request.size !== 'undefined') params.append('size', String(request.size))
     
     const url = `${API_BASE_URL}/articles?${params.toString()}`
     

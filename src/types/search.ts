@@ -21,10 +21,24 @@ export interface SearchRequest {
   documentType?: string
   subjectDomain?: string
   source?: string
+  page?: number
+  size?: number
 }
 
 export interface SearchResponse {
   status: number
   message: string
-  data: SearchResult[]
+  data: {
+    content: SearchResult[]
+    totalPages: number
+    totalElements: number
+    size: number
+    number: number
+    first: boolean
+    last: boolean
+    pageable?: any
+    sort?: any
+    numberOfElements?: number
+    empty?: boolean
+  }
 } 

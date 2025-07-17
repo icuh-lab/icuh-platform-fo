@@ -10,9 +10,10 @@ interface SearchResultsProps {
   filters: SearchFilters
   isLoading?: boolean
   error?: string | null
+  totalElements?: number
 }
 
-export function SearchResults({ query, results, filters, isLoading = false, error = null }: SearchResultsProps) {
+export function SearchResults({ query, results, filters, isLoading = false, error = null, totalElements }: SearchResultsProps) {
   const navigate = useNavigate()
   
   if (isLoading) {
@@ -35,7 +36,7 @@ export function SearchResults({ query, results, filters, isLoading = false, erro
     <div className="mt-8">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-base text-gray-600">
-          검색결과 ({results.length}건)
+          검색결과 ({typeof totalElements === 'number' ? totalElements : results.length}건)
         </h2>
         <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" onClick={() => navigate('/create')}>
           <PlusIcon className="w-4 h-4" />
