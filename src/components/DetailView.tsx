@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { DownloadIcon, FileIcon } from 'lucide-react'
 
 interface FileItem {
@@ -37,6 +37,38 @@ function formatFileSize(bytes: number) {
 export function DetailView({ data }: { data: DetailData }) {
   // 확장자 중복 없이 추출
   const uniqueExtensions = Array.from(new Set((data.files || []).map((f: FileItem) => f.extension?.name?.toLowerCase())))
+
+  // 수정/삭제 요청 모달 상태
+  const [showRequestModal, setShowRequestModal] = useState(false)
+  const [requestType, setRequestType] = useState<'edit' | 'delete'>('edit')
+  const [requestPassword, setRequestPassword] = useState('')
+  const [requestReason, setRequestReason] = useState('')
+  const [requestError, setRequestError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleRequestSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setRequestError('')
+    if (!requestPassword.trim()) {
+      setRequestError('비밀번호를 입력해주세요.')
+      return
+    }
+    if (!requestReason.trim()) {
+      setRequestError('사유를 입력해주세요.')
+      return
+    }
+    setIsSubmitting(true)
+    // TODO: 실제 요청 API 호출
+    setTimeout(() => {
+      setIsSubmitting(false)
+      setShowRequestModal(false)
+      setRequestPassword('')
+      setRequestReason('')
+      setRequestType('edit')
+      alert('요청이 전송되었습니다.')
+    }, 1000)
+  }
+
   return (
     <div className="max-w-5xl mx-auto py-8 px-4">
       <div className="mb-8">
@@ -46,8 +78,75 @@ export function DetailView({ data }: { data: DetailData }) {
           <div className="text-gray-700 text-base whitespace-pre-line">{data.description}</div>
         </div>
       </div>
+      {/* 수정/삭제 요청 모달 */}
+      {showRequestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-10 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm border">
+            <h3 className="text-lg font-medium mb-4">데이터 수정/삭제 요청</h3>
+            <form onSubmit={handleRequestSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
+                <input
+                  type="password"
+                  value={requestPassword}
+                  onChange={e => setRequestPassword(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md focus:border-blue-500"
+                  placeholder="등록 시 사용한 비밀번호 입력"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">요청 유형</label>
+                <select
+                  value={requestType}
+                  onChange={e => setRequestType(e.target.value as 'edit' | 'delete')}
+                  className="w-full px-3 py-2 border rounded-md focus:border-blue-500 bg-white"
+                >
+                  <option value="edit">수정</option>
+                  <option value="delete">삭제</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">사유</label>
+                <textarea
+                  value={requestReason}
+                  onChange={e => setRequestReason(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md h-24 focus:border-blue-500"
+                  placeholder="요청 사유를 입력하세요"
+                />
+              </div>
+              {requestError && <div className="text-red-600 text-sm">{requestError}</div>}
+              <div className="flex justify-end gap-2 mt-2">
+                <button
+                  type="button"
+                  className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs"
+                  onClick={() => setShowRequestModal(false)}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+                  disabled={isSubmitting}
+                >
+                  관리자에게 전송하기
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       <div className="bg-gray-50 p-6 rounded-lg mb-8 border border-black">
-        <h2 className="text-lg font-medium mb-4">파일데이터 정보</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium">파일데이터 정보</h2>
+          <button
+            type="button"
+            className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+            onClick={() => setShowRequestModal(true)}
+          >
+            데이터 수정/삭제 요청
+          </button>
+        </div>
         <div className="border rounded-lg bg-white overflow-hidden">
           <table className="w-full text-sm">
             <tbody>
