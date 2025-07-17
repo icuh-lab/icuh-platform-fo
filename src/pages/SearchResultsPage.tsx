@@ -108,8 +108,11 @@ export function SearchResultsPage() {
     setResults([])
     setError(null)
     setCurrentPage(1)
-    // URL 파라미터 초기화
-    setSearchParams({})
+    // URL 파라미터 초기화 (page=1, size=pageSize만 남김)
+    const newSearchParams = new URLSearchParams()
+    newSearchParams.set('page', '1')
+    newSearchParams.set('size', String(pageSize))
+    setSearchParams(newSearchParams)
   }
 
   const handleBackToSearch = () => {
