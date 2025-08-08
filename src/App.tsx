@@ -8,6 +8,7 @@ import {
 import { SearchPage } from './pages/SearchPage'
 import { SearchResultsPage } from './pages/SearchResultsPage'
 import DetailPage from './pages/DetailPage'
+import EditPage from './pages/EditPage'
 import { CreateForm } from './components/CreateForm'
 
 export function App() {
@@ -17,6 +18,7 @@ export function App() {
         <Route path="/" element={<SearchPage />} />
         <Route path="/search" element={<SearchResultsPage />} />
         <Route path="/create" element={<CreateForm />} />
+        <Route path="/edit/:id" element={<EditPage />} />
         <Route path="/detail/:id" element={<DetailPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

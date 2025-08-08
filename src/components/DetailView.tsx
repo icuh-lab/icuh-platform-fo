@@ -1,5 +1,8 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DownloadIcon, FileIcon } from 'lucide-react'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'
 
 interface FileItem {
   id: number
@@ -35,38 +38,113 @@ function formatFileSize(bytes: number) {
 }
 
 export function DetailView({ data }: { data: DetailData }) {
+  const navigate = useNavigate()
   // 확장자 중복 없이 추출
   const uniqueExtensions = Array.from(new Set((data.files || []).map((f: FileItem) => f.extension?.name?.toLowerCase())))
 
-  // 수정/삭제 요청 모달 상태
-  const [showRequestModal, setShowRequestModal] = useState(false)
-  const [requestType, setRequestType] = useState<'edit' | 'delete'>('edit')
-  const [requestPassword, setRequestPassword] = useState('')
-  const [requestReason, setRequestReason] = useState('')
-  const [requestError, setRequestError] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  // 수정 요청 모달 상태
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editPassword, setEditPassword] = useState('')
+  const [editReason, setEditReason] = useState('')
+  const [editError, setEditError] = useState('')
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false)
 
-  const handleRequestSubmit = (e: React.FormEvent) => {
+  // 삭제 요청 모달 상태
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteReason, setDeleteReason] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false)
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setRequestError('')
-    if (!requestPassword.trim()) {
-      setRequestError('비밀번호를 입력해주세요.')
+    setEditError('')
+    if (!editPassword.trim()) {
+      setEditError('비밀번호를 입력해주세요.')
       return
     }
-    if (!requestReason.trim()) {
-      setRequestError('사유를 입력해주세요.')
+    if (!editReason.trim()) {
+      setEditError('사유를 입력해주세요.')
       return
     }
-    setIsSubmitting(true)
-    // TODO: 실제 요청 API 호출
-    setTimeout(() => {
-      setIsSubmitting(false)
-      setShowRequestModal(false)
-      setRequestPassword('')
-      setRequestReason('')
-      setRequestType('edit')
-      alert('요청이 전송되었습니다.')
-    }, 1000)
+    setIsEditSubmitting(true)
+    
+    try {
+      const requestPayload = {
+        password: editPassword,
+        reason: editReason
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/articles/${data.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestPayload)
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `요청 실패: ${response.status}`)
+      }
+      
+      // 성공 시 모달 닫기 및 상태 초기화
+      setShowEditModal(false)
+      setEditPassword('')
+      setEditReason('')
+      alert('수정 요청이 승인되었습니다. 수정 페이지로 이동합니다.')
+      navigate(`/edit/${data.id}`)
+    } catch (error) {
+      console.error('Edit request failed:', error)
+      setEditError(error instanceof Error ? error.message : '요청 전송 중 오류가 발생했습니다.')
+    } finally {
+      setIsEditSubmitting(false)
+    }
+  }
+
+  const handleDeleteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setDeleteError('')
+    if (!deletePassword.trim()) {
+      setDeleteError('비밀번호를 입력해주세요.')
+      return
+    }
+    if (!deleteReason.trim()) {
+      setDeleteError('사유를 입력해주세요.')
+      return
+    }
+    setIsDeleteSubmitting(true)
+    
+    try {
+      const requestPayload = {
+        password: deletePassword,
+        reason: deleteReason
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/articles/${data.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestPayload)
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `요청 실패: ${response.status}`)
+      }
+      
+      // 성공 시 모달 닫기 및 상태 초기화
+      setShowDeleteModal(false)
+      setDeletePassword('')
+      setDeleteReason('')
+      alert('삭제 요청이 전송되었습니다.')
+    } catch (error) {
+      console.error('Delete request failed:', error)
+      setDeleteError(error instanceof Error ? error.message : '요청 전송 중 오류가 발생했습니다.')
+    } finally {
+      setIsDeleteSubmitting(false)
+    }
   }
 
   return (
@@ -79,55 +157,90 @@ export function DetailView({ data }: { data: DetailData }) {
         </div>
       </div>
       {/* 수정/삭제 요청 모달 */}
-      {showRequestModal && (
+      {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-10 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm border">
-            <h3 className="text-lg font-medium mb-4">데이터 수정/삭제 요청</h3>
-            <form onSubmit={handleRequestSubmit} className="space-y-4">
+            <h3 className="text-lg font-medium mb-4">데이터 수정 요청</h3>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
                 <input
                   type="password"
-                  value={requestPassword}
-                  onChange={e => setRequestPassword(e.target.value)}
+                  value={editPassword}
+                  onChange={e => setEditPassword(e.target.value)}
                   className="w-full px-3 py-2 border rounded-md focus:border-blue-500"
                   placeholder="등록 시 사용한 비밀번호 입력"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">요청 유형</label>
-                <select
-                  value={requestType}
-                  onChange={e => setRequestType(e.target.value as 'edit' | 'delete')}
-                  className="w-full px-3 py-2 border rounded-md focus:border-blue-500 bg-white"
-                >
-                  <option value="edit">수정</option>
-                  <option value="delete">삭제</option>
-                </select>
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">사유</label>
                 <textarea
-                  value={requestReason}
-                  onChange={e => setRequestReason(e.target.value)}
+                  value={editReason}
+                  onChange={e => setEditReason(e.target.value)}
                   className="w-full px-3 py-2 border rounded-md h-24 focus:border-blue-500"
                   placeholder="요청 사유를 입력하세요"
                 />
               </div>
-              {requestError && <div className="text-red-600 text-sm">{requestError}</div>}
+              {editError && <div className="text-red-600 text-sm">{editError}</div>}
               <div className="flex justify-end gap-2 mt-2">
                 <button
                   type="button"
                   className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs"
-                  onClick={() => setShowRequestModal(false)}
-                  disabled={isSubmitting}
+                  onClick={() => setShowEditModal(false)}
+                  disabled={isEditSubmitting}
                 >
                   취소
                 </button>
                 <button
                   type="submit"
                   className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
-                  disabled={isSubmitting}
+                  disabled={isEditSubmitting}
+                >
+                  관리자에게 전송하기
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-10 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm border">
+            <h3 className="text-lg font-medium mb-4">데이터 삭제 요청</h3>
+            <form onSubmit={handleDeleteSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={e => setDeletePassword(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md focus:border-blue-500"
+                  placeholder="등록 시 사용한 비밀번호 입력"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">사유</label>
+                <textarea
+                  value={deleteReason}
+                  onChange={e => setDeleteReason(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md h-24 focus:border-blue-500"
+                  placeholder="요청 사유를 입력하세요"
+                />
+              </div>
+              {deleteError && <div className="text-red-600 text-sm">{deleteError}</div>}
+              <div className="flex justify-end gap-2 mt-2">
+                <button
+                  type="button"
+                  className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs"
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={isDeleteSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
+                  disabled={isDeleteSubmitting}
                 >
                   관리자에게 전송하기
                 </button>
@@ -139,13 +252,22 @@ export function DetailView({ data }: { data: DetailData }) {
       <div className="bg-gray-50 p-6 rounded-lg mb-8 border border-black">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-medium">파일데이터 정보</h2>
-          <button
-            type="button"
-            className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
-            onClick={() => setShowRequestModal(true)}
-          >
-            데이터 수정/삭제 요청
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+              onClick={() => setShowEditModal(true)}
+            >
+              데이터 수정 요청
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
+              onClick={() => setShowDeleteModal(true)}
+            >
+              데이터 삭제 요청
+            </button>
+          </div>
         </div>
         <div className="border rounded-lg bg-white overflow-hidden">
           <table className="w-full text-sm">

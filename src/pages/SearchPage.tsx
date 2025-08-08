@@ -4,6 +4,8 @@ import { SearchBar } from '../components/SearchBar'
 import { SearchFilters } from '../components/SearchFilters'
 import type { SearchFilters as SearchFiltersType } from '../types/search'
 
+//import { SearchResult } from '../types'
+
 export function SearchPage() {
   const navigate = useNavigate()
   
@@ -13,6 +15,8 @@ export function SearchPage() {
     subjectDomain: '',
     source: '',
   })
+
+  //const [results, setResults] = useState<SearchResult[]>([]);
   
   const handleSearch = (query: string) => {
     // 검색 결과 페이지로 이동
