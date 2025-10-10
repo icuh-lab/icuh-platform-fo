@@ -6,7 +6,7 @@
 FROM node:20.19.5-alpine AS builder
 
 # 작업 디렉토리를 설정합니다.
-WORKDIR /app
+WORKDIR /workspace/app
 
 # package.json과 lock 파일을 먼저 복사하여 의존성을 캐싱합니다.
 COPY package.json package-lock.json ./
