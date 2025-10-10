@@ -23,6 +23,7 @@ const mockOpenAPIData = [
     category: 'agriculture',
     documentType: 'statistical_data',
     subjectDomain: 'agriculture',
+    source: '(재)인프라재난관리진흥원',
     updatedAt: '2024-01-15T10:30:00Z',
     status: 'active' as const,
     responseFormat: 'JSON',
