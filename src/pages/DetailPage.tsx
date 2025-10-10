@@ -10,7 +10,7 @@ export default function DetailPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:8080/api/v1/articles/${id}`)
+    fetch(`http://infradna.io.kr:8081/api/v1/articles/${id}`)
       .then(res => {
         if (!res.ok) throw new Error('데이터를 불러오지 못했습니다.');
         return res.json();

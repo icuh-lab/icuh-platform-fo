@@ -1,6 +1,6 @@
 import type { SearchRequest, SearchResponse, OpenAPIResult } from '../types/search'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://infradna.io.kr:8081/api/v1'
 
 // 하드코딩된 OpenAPI 데이터 생성 함수 (가뭄 관련 API)
 export const generateMockOpenAPIData = (query: string, filters: any): OpenAPIResult[] => {

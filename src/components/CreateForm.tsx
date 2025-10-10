@@ -110,7 +110,7 @@ export function CreateForm() {
       formData.files.forEach(file => {
         fd.append('files', file)
       })
-      const res = await fetch('http://localhost:8080/api/v1/articles', {
+      const res = await fetch('http://infradna.io.kr:8081/api/v1/articles', {
         method: 'POST',
         body: fd,
       })

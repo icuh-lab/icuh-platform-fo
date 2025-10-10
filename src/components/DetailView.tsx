@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DownloadIcon, FileIcon } from 'lucide-react'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://infradna.io.kr:8081/api/v1'
 
 interface FileItem {
   id: number
