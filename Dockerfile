@@ -31,7 +31,7 @@ RUN npm run build
 FROM nginx:1.25-alpine
 
 # 빌드 스테이지에서 생성된 정적 파일들을 Nginx의 기본 웹 루트로 복사합니다.
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /workspace/app/dist /usr/share/nginx/html
 
 # 커스텀 Nginx 설정을 복사합니다. (React Router 등 SPA 라우팅 지원)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
