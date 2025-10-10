@@ -38,10 +38,11 @@ export function SearchResults({ query, results, filters, isLoading = false, erro
         <h2 className="text-base text-gray-600">
           검색결과 ({typeof totalElements === 'number' ? totalElements : results.length}건)
         </h2>
-        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" onClick={() => navigate('/create')}>
+        {/* 중복된 게시글 작성 버튼 - 상단 UnifiedSearchResults에서 이미 제공됨 */}
+        {/* <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" onClick={() => navigate('/create')}>
           <PlusIcon className="w-4 h-4" />
           게시글 작성
-        </button>
+        </button> */}
       </div>
       
       <div className="space-y-6">

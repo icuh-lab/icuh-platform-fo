@@ -48,34 +48,22 @@ export function ResultItem({ data }: ResultItemProps) {
     switch (filterType) {
       case 'documentType':
         const documentTypeMap: { [key: string]: string } = {
-          report: '보고서',
-          survey_data: '조사자료',
-          guideline: '가이드라인',
-          manual: '매뉴얼',
-          statistical_data: '통계자료',
-          program: '프로그램',
-          thesis: '논문',
-          research_data: '연구자료',
-          others: '기타',
+          RESEARCH_SURVEY: '연구/조사 자료',
+          POLICY_STANDARD: '정책/기준 문서',
+          REPORT: '보고서',
+          DATA_TECHNICAL: '데이터/기술 자료',
+          PLANNING_PROPOSAL: '기획/계획 문서',
+          OTHERS: '기타'
         }
         return documentTypeMap[value] || value
       case 'subjectDomain':
         const subjectDomainMap: { [key: string]: string } = {
-          agriculture: '농업',
-          ecosystem: '생태계',
-          energy: '에너지',
-          wildfire: '산불',
-          water_supply: '물 공급 및 수도시설',
-          sanitation: '위생',
-          industry: '산업',
-          socio_economy: '사회 경제',
-          climate_change: '기후 변화',
-          drought_monitoring: '가뭄진단 및 예경보',
-          international: '해외',
-          environment: '환경',
-          livestock: '축산업',
-          fisheries: '수산업',
-          others: '기타',
+          CLIMATE_IMPACT_INDUSTRY: '기후 영향 산업 분야',
+          RESOURCE_ENVIRONMENTAL_MANAGEMENT: '자원 및 환경 관리',
+          DISASTER_CLIMATE_RISK: '재난 및 기후 리스크',
+          SOCIO_ECONOMIC_IMPACT: '사회/경제적 영향',
+          REGIONAL_EXTERNAL_REFERENCE: '지역/외부 참조 정보',
+          OTHERS: '기타'
         }
         return subjectDomainMap[value] || value
       case 'source':

@@ -20,35 +20,23 @@ export function SearchFilters({ filters, onFilterChange, onReset }: SearchFilter
       <div className="relative">
         <select className={selectClass} value={filters.documentType} onChange={(e) => onFilterChange('documentType', e.target.value)}>
           <option value="">문서 성격</option>
-          <option value="report">보고서</option>
-          <option value="survey_data">조사자료</option>
-          <option value="guideline">가이드라인</option>
-          <option value="manual">매뉴얼</option>
-          <option value="statistical_data">통계자료</option>
-          <option value="program">프로그램</option>
-          <option value="thesis">논문</option>
-          <option value="research_data">연구자료</option>
-          <option value="others">기타</option>
+          <option value="RESEARCH_SURVEY">연구/조사 자료</option>
+          <option value="POLICY_STANDARD">정책/기준 문서</option>
+          <option value="REPORT">보고서</option>
+          <option value="DATA_TECHNICAL">데이터/기술 자료</option>
+          <option value="PLANNING_PROPOSAL">기획/계획 문서</option>
+          <option value="OTHERS">기타</option>
         </select>
       </div>
       <div className="relative">
         <select className={selectClass} value={filters.subjectDomain} onChange={(e) => onFilterChange('subjectDomain', e.target.value)}>
           <option value="">주제 영역</option>
-          <option value="agriculture">농업</option>
-          <option value="ecosystem">생태계</option>
-          <option value="energy">에너지</option>
-          <option value="wildfire">산불</option>
-          <option value="water_supply">물 공급 및 수도시설</option>
-          <option value="sanitation">위생</option>
-          <option value="industry">산업</option>
-          <option value="socio_economy">사회 경제</option>
-          <option value="climate_change">기후 변화</option>
-          <option value="drought_monitoring">가뭄진단 및 예경보</option>
-          <option value="international">해외</option>
-          <option value="environment">환경</option>
-          <option value="livestock">축산업</option>
-          <option value="fisheries">수산업</option>
-          <option value="others">기타</option>
+          <option value="CLIMATE_IMPACT_INDUSTRY">기후 영향 산업 분야</option>
+          <option value="RESOURCE_ENVIRONMENTAL_MANAGEMENT">자원 및 환경 관리</option>
+          <option value="DISASTER_CLIMATE_RISK">재난 및 기후 리스크</option>
+          <option value="SOCIO_ECONOMIC_IMPACT">사회/경제적 영향</option>
+          <option value="REGIONAL_EXTERNAL_REFERENCE">지역/외부 참조 정보</option>
+          <option value="OTHERS">기타</option>
         </select>
       </div>
       <div className="relative">

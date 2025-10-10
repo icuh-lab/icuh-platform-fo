@@ -92,7 +92,7 @@ export function DetailView({ data }: { data: DetailData }) {
       setShowEditModal(false)
       setEditPassword('')
       setEditReason('')
-      alert('수정 요청이 승인되었습니다. 수정 페이지로 이동합니다.')
+      alert('수정 요청이 전송되었습니다. 게시글 수정을 위해 수정 페이지로 이동합니다.')
       navigate(`/edit/${data.id}`)
     } catch (error) {
       console.error('Edit request failed:', error)
@@ -139,6 +139,7 @@ export function DetailView({ data }: { data: DetailData }) {
       setDeletePassword('')
       setDeleteReason('')
       alert('삭제 요청이 전송되었습니다.')
+      navigate(`/search`)
     } catch (error) {
       console.error('Delete request failed:', error)
       setDeleteError(error instanceof Error ? error.message : '요청 전송 중 오류가 발생했습니다.')
@@ -293,20 +294,16 @@ export function DetailView({ data }: { data: DetailData }) {
                 <td className="py-3 px-4">{data.department}</td>
               </tr>
               <tr className="border-b">
-                <td className="py-3 px-4 bg-gray-50 font-medium">확장자</td>
-                <td className="py-3 px-4">{uniqueExtensions.length > 0 ? uniqueExtensions.join(', ').toUpperCase() : '-'}</td>
+                <td className="py-3 px-4 bg-gray-50 font-medium">작성자</td>
+                <td className="py-3 px-4">{data.author}</td>
               </tr>
               <tr className="border-b">
                 <td className="py-3 px-4 bg-gray-50 font-medium">등록일</td>
                 <td className="py-3 px-4">{data.createdAt ? new Date(data.createdAt).toLocaleString('ko-KR') : '-'}</td>
               </tr>
-              <tr className="border-b">
+              <tr>
                 <td className="py-3 px-4 bg-gray-50 font-medium">수정일</td>
                 <td className="py-3 px-4">{data.updatedAt ? new Date(data.updatedAt).toLocaleString('ko-KR') : '-'}</td>
-              </tr>
-              <tr>
-                <td className="py-3 px-4 bg-gray-50 font-medium">조회수</td>
-                <td className="py-3 px-4">{data.views}</td>
               </tr>
             </tbody>
           </table>
@@ -329,7 +326,7 @@ export function DetailView({ data }: { data: DetailData }) {
                   </div>
                 </div>
                 <a
-                  href={file.filePath}
+                  href={`${API_BASE_URL}/files/${file.id}/download`}
                   className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
                   download
                   target="_blank"

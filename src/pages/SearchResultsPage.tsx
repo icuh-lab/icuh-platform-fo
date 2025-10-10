@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { SearchBar } from '../components/SearchBar'
 import { SearchFilters } from '../components/SearchFilters'
-import { SearchResults } from '../components/SearchResults'
-import type { SearchFilters as SearchFiltersType, SearchResult } from '../types/search'
-import { searchData } from '../services/searchService'
+import { UnifiedSearchResults } from '../components/UnifiedSearchResults'
+import type { SearchFilters as SearchFiltersType, SearchResult, OpenAPIResult } from '../types/search'
+import { unifiedSearch, generateMockOpenAPIData } from '../services/searchService'
 import { Pagination } from '../components/Pagination'
 
 export function SearchResultsPage() {
@@ -17,7 +17,8 @@ export function SearchResultsPage() {
     subjectDomain: '',
     source: '',
   })
-  const [results, setResults] = useState<SearchResult[]>([])
+  const [fileResults, setFileResults] = useState<SearchResult[]>([])
+  const [openAPIResults, setOpenAPIResults] = useState<OpenAPIResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
@@ -41,10 +42,10 @@ export function SearchResultsPage() {
     })
     setCurrentPage(pageFromUrl)
     // 검색 실행
-    performSearch(queryFromUrl, { documentType, subjectDomain, source }, pageFromUrl)
+    performUnifiedSearch(queryFromUrl, { documentType, subjectDomain, source }, pageFromUrl)
   }, [searchParams])
 
-  const performSearch = async (query: string, currentFilters: SearchFiltersType, page: number = 1) => {
+  const performUnifiedSearch = async (query: string, currentFilters: SearchFiltersType, page: number = 1) => {
     setIsLoading(true)
     setError(null)
     try {
@@ -56,12 +57,17 @@ export function SearchResultsPage() {
         page: page - 1, // 백엔드가 0-base면 -1, 1-base면 그대로
         size: pageSize,
       } as any
-      const response = await searchData(searchRequest)
-      // response.data.content, response.data.totalPages, ...
-      setResults(response.data.content)
-      setTotalPages(response.data.totalPages)
-      setTotalElements(response.data.totalElements)
-      setPageSize(response.data.size)
+      
+      const response = await unifiedSearch(searchRequest)
+      
+      // 파일 데이터 설정
+      setFileResults(response.fileData.data.content)
+      setTotalPages(response.fileData.data.totalPages)
+      setTotalElements(response.fileData.data.totalElements)
+      setPageSize(response.fileData.data.size)
+      
+      // OpenAPI 데이터 설정
+      setOpenAPIResults(response.openAPIData)
     } catch (err) {
       setError('검색 중 오류가 발생했습니다.')
       console.error('Search error:', err)
@@ -72,6 +78,11 @@ export function SearchResultsPage() {
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query)
+    
+    // 검색어 변경 시 OpenAPI 데이터도 필터링
+    const openAPIData = generateMockOpenAPIData(query, filters)
+    setOpenAPIResults(openAPIData)
+    
     // URL 파라미터 업데이트
     const newSearchParams = new URLSearchParams()
     if (query) newSearchParams.set('query', query)
@@ -88,6 +99,11 @@ export function SearchResultsPage() {
       [filterType]: value,
     }
     setFilters(newFilters)
+    
+    // 필터 변경 시 OpenAPI 데이터도 다시 검색
+    const openAPIData = generateMockOpenAPIData(searchQuery, newFilters)
+    setOpenAPIResults(openAPIData)
+    
     // URL 파라미터 업데이트
     const newSearchParams = new URLSearchParams()
     if (searchQuery) newSearchParams.set('query', searchQuery)
@@ -100,12 +116,18 @@ export function SearchResultsPage() {
 
   const handleReset = () => {
     setSearchQuery('')
-    setFilters({
+    const resetFilters = {
       documentType: '',
       subjectDomain: '',
       source: '',
-    })
-    setResults([])
+    }
+    setFilters(resetFilters)
+    
+    // 리셋 시 OpenAPI 데이터도 초기화
+    const openAPIData = generateMockOpenAPIData('', resetFilters)
+    setOpenAPIResults(openAPIData)
+    
+    setFileResults([])
     setError(null)
     setCurrentPage(1)
     // URL 파라미터 초기화 (page=1, size=pageSize만 남김)
@@ -142,9 +164,9 @@ export function SearchResultsPage() {
     <div className="w-full py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <button onClick={handleBackToSearch}className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+          {/* <button onClick={handleBackToSearch}className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
             ← 검색 페이지로 돌아가기
-          </button>
+          </button> */}
         </div>
         {/* 페이지 사이즈 선택 */}
         <div className="flex justify-end mb-2">
@@ -166,7 +188,16 @@ export function SearchResultsPage() {
         
         <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
         <SearchFilters filters={filters} onFilterChange={handleFilterChange} onReset={handleReset} />
-        <SearchResults query={searchQuery} results={results} filters={filters} isLoading={isLoading} error={error} totalElements={totalElements} />
+        <UnifiedSearchResults 
+          query={searchQuery} 
+          fileResults={fileResults} 
+          openAPIResults={openAPIResults}
+          filters={filters} 
+          isLoading={isLoading} 
+          error={error} 
+          fileTotalElements={totalElements}
+          openAPITotalElements={openAPIResults.length}
+        />
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       </div>
     </div>

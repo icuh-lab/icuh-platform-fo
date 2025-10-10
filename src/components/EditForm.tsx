@@ -171,8 +171,8 @@ export function EditForm() {
       })
       
       if (res.ok) {
-        alert('수정이 완료되었습니다!')
-        navigate(`/detail/${id}`)
+        alert('수정 요청이 최종적으로 완료되었습니다!')
+        navigate('/search')
       } else {
         const errText = await res.text()
         alert('수정에 실패했습니다.\n' + errText)
@@ -276,33 +276,21 @@ export function EditForm() {
 
   // 문서 유형 및 주제 영역 value-ID 매핑
   const documentTypeMap: Record<string, number> = {
-    report: 1,
-    survey_data: 2,
-    guideline: 3,
-    manual: 4,
-    statistical_data: 5,
-    program: 6,
-    thesis: 7,
-    research_data: 8,
-    others: 9,
+    RESEARCH_SURVEY: 1,
+    POLICY_STANDARD: 2,
+    REPORT: 3,
+    DATA_TECHNICAL: 4,
+    PLANNING_PROPOSAL: 5,
+    OTHERS: 6
   }
   
   const subjectDomainMap: Record<string, number> = {
-    agriculture: 1,
-    ecosystem: 2,
-    energy: 3,
-    wildfire: 4,
-    water_supply: 5,
-    sanitation: 6,
-    industry: 7,
-    socio_economy: 8,
-    climate_change: 9,
-    drought_monitoring: 10,
-    international: 11,
-    environment: 12,
-    livestock: 13,
-    fisheries: 14,
-    others: 15,
+    CLIMATE_IMPACT_INDUSTRY: 1,
+    RESOURCE_ENVIRONMENTAL_MANAGEMENT: 2,
+    DISASTER_CLIMATE_RISK: 3,
+    SOCIO_ECONOMIC_IMPACT: 4,
+    REGIONAL_EXTERNAL_REFERENCE: 5,
+    OTHERS: 6
   }
 
   if (loading) return <div className="max-w-3xl mx-auto py-8 px-4">로딩 중...</div>
@@ -438,15 +426,12 @@ export function EditForm() {
               className={`w-full px-3 py-2 border rounded-md bg-white ${errors.documentType ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
             >
               <option value="">문서 유형 선택</option>
-              <option value="report">보고서</option>
-              <option value="survey_data">조사자료</option>
-              <option value="guideline">가이드라인</option>
-              <option value="manual">매뉴얼</option>
-              <option value="statistical_data">통계자료</option>
-              <option value="program">프로그램</option>
-              <option value="thesis">논문</option>
-              <option value="research_data">연구자료</option>
-              <option value="others">기타</option>
+              <option value="RESEARCH_SURVEY">연구/조사 자료</option>
+              <option value="POLICY_STANDARD">정책/기준 문서</option>
+              <option value="REPORT">보고서</option>
+              <option value="DATA_TECHNICAL">데이터/기술 자료</option>
+              <option value="PLANNING_PROPOSAL">기획/계획 문서</option>
+              <option value="OTHERS">기타</option>
             </select>
             {errors.documentType && (
               <p className="mt-1 text-sm text-red-600">{errors.documentType}</p>
@@ -463,21 +448,12 @@ export function EditForm() {
               className={`w-full px-3 py-2 border rounded-md bg-white ${errors.subjectDomain ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
             >
               <option value="">주제 영역 선택</option>
-              <option value="agriculture">농업</option>
-              <option value="ecosystem">생태계</option>
-              <option value="energy">에너지</option>
-              <option value="wildfire">산불</option>
-              <option value="water_supply">물 공급 및 수도시설</option>
-              <option value="sanitation">위생</option>
-              <option value="industry">산업</option>
-              <option value="socio_economy">사회 경제</option>
-              <option value="climate_change">기후 변화</option>
-              <option value="drought_monitoring">가뭄진단 및 예경보</option>
-              <option value="international">해외</option>
-              <option value="environment">환경</option>
-              <option value="livestock">축산업</option>
-              <option value="fisheries">수산업</option>
-              <option value="others">기타</option>
+              <option value="CLIMATE_IMPACT_INDUSTRY">기후 영향 산업 분야</option>
+              <option value="RESOURCE_ENVIRONMENTAL_MANAGEMENT">자원 및 환경 관리</option>
+              <option value="DISASTER_CLIMATE_RISK">재난 및 기후 리스크</option>
+              <option value="SOCIO_ECONOMIC_IMPACT">사회/경제적 영향</option>
+              <option value="REGIONAL_EXTERNAL_REFERENCE">지역/외부 참조 정보</option>
+              <option value="OTHERS">기타</option>
             </select>
             {errors.subjectDomain && (
               <p className="mt-1 text-sm text-red-600">{errors.subjectDomain}</p>
