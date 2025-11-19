@@ -1,6 +1,6 @@
 import type { SearchRequest, SearchResponse, OpenAPIResult } from '../types/search'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://infradna.io.kr:8081/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_URL
 
 // 하드코딩된 OpenAPI 데이터 생성 함수 (가뭄 관련 API)
 export const generateMockOpenAPIData = (query: string, filters: any): OpenAPIResult[] => {
@@ -312,7 +312,7 @@ export async function searchData(request: SearchRequest): Promise<SearchResponse
   if (request.page !== undefined) queryParams.append('page', request.page.toString())
   if (request.size) queryParams.append('size', request.size.toString())
 
-  const response = await fetch(`${API_BASE_URL}/articles?${queryParams.toString()}`)
+  const response = await fetch(`${API_BASE_URL}/api/v1/articles?${queryParams.toString()}`)
   
   if (!response.ok) {
     throw new Error(`Search failed: ${response.status}`)

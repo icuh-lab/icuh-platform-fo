@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DownloadIcon, FileIcon } from 'lucide-react'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://infradna.io.kr:8081/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_URL
 
 interface FileItem {
   id: number
@@ -121,7 +121,7 @@ export function DetailView({ data }: { data: DetailData }) {
         reason: deleteReason
       }
       
-      const response = await fetch(`${API_BASE_URL}/articles/${data.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/articles/${data.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

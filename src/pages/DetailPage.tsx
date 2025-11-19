@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { DetailView } from '../components/DetailView';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL
+
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<any>(null);
@@ -10,7 +12,7 @@ export default function DetailPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`http://infradna.io.kr:8081/api/v1/articles/${id}`)
+    fetch(`${API_BASE_URL}/${id}`)
       .then(res => {
         if (!res.ok) throw new Error('데이터를 불러오지 못했습니다.');
         return res.json();

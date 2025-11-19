@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { UploadIcon, FileIcon, XIcon, AlertCircleIcon } from 'lucide-react'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL
+
 export function CreateForm() {
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -110,7 +112,7 @@ export function CreateForm() {
       formData.files.forEach(file => {
         fd.append('files', file)
       })
-      const res = await fetch('http://infradna.io.kr:8081/api/v1/articles', {
+      const res = await fetch(`${API_BASE_URL}/api/v1/articles`, {
         method: 'POST',
         body: fd,
       })
