@@ -75,7 +75,7 @@ export function DetailView({ data }: { data: DetailData }) {
         reason: editReason
       }
       
-      const response = await fetch(`${API_BASE_URL}/articles/${data.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/articles/${data.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -326,7 +326,7 @@ export function DetailView({ data }: { data: DetailData }) {
                   </div>
                 </div>
                 <a
-                  href={`${API_BASE_URL}/files/${file.id}/download`}
+                  href={`${API_BASE_URL}/api/v1/multipart-upload/files/${file.id}/download`}
                   className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
                   download
                   target="_blank"
