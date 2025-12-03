@@ -12,7 +12,7 @@ export default function DetailPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${API_BASE_URL}/${id}`)
+    fetch(`${API_BASE_URL}/api/v1/articles/${id}`)
       .then(res => {
         if (!res.ok) throw new Error('데이터를 불러오지 못했습니다.');
         return res.json();
