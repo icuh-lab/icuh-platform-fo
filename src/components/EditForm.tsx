@@ -2,7 +2,15 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { UploadIcon, FileIcon, XIcon, AlertCircleIcon } from 'lucide-react'
 
+interface PartETag {
+  partNumber: number,
+  eTag: string
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_URL
+
+// S3 멀티파트의 최소 청크 크기 (마지막 파트 제외)
+const CHUNK_SIZE = 5 * 1024 * 1024 // 5MB
 
 interface FileItem {
   id: number
@@ -68,7 +76,7 @@ export function EditForm() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/articles/${id}`)
+        const response = await fetch(`${API_BASE_URL}/api/v1/articles/${id}`)
         if (!response.ok) {
           throw new Error('데이터를 불러오지 못했습니다.')
         }
@@ -155,22 +163,27 @@ export function EditForm() {
         subjectDomainId: subjectDomainMap[formData.subjectDomain] || null,
       }
       
-      // form-data 생성
-      const fd = new FormData()
       const json = JSON.stringify(requestPayload);
       const blob = new Blob([json], { type: 'application/json' });
       
-      fd.append('request', blob)
-      formData.files.forEach(file => {
-        fd.append('files', file)
-      })
-      
-      const res = await fetch(`${API_BASE_URL}/articles/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/articles/${id}`, {
         method: 'PATCH',
-        body: fd,
+        body: blob,
       })
       
       if (res.ok) {
+        const responseData = await res.json()
+        const articleId = responseData.data
+
+        const uploadPromises = formData.files.map(file => uploadSingleFile(file, articleId))
+
+        try {
+          await Promise.all(uploadPromises)
+          alert('모든 파일 업로드가 완료되었습니다!')
+        } catch (error) {
+          alert('업로드 중 하나 이상의 파일에서 오류 발생')
+        }
+
         alert('수정 요청이 최종적으로 완료되었습니다!')
         navigate('/search')
       } else {
@@ -271,6 +284,138 @@ export function EditForm() {
   const clearFieldError = (field: keyof typeof errors) => {
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }))
+    }
+  }
+
+  const uploadSingleFile = async (file: File, articleId: number) => {
+    try {
+      // --- 1. Initiate Upload ---
+      // 원본 스텁의 API 경로를 사용합니다.
+      const { uploadId, fileName } = await initiateUpload(file.name, file.type, file.size)
+      // --- 2. Upload Parts ---
+      const partETags = await uploadFileParts(file, uploadId, fileName)
+      // --- 3. Complete Upload ---
+      await completeUpload(uploadId, fileName, partETags, articleId, file.size, file.name, "update")
+
+    } catch (error) {
+      // Promise.all이 에러를 인지하도록 re-throw
+      throw new Error(`Failed to upload ${file.name}`)
+    }
+  }
+
+  /**
+   * [API 1] Spring 서버에 업로드 시작을 알림 (사용자 원본 경로 사용)
+   */
+  const initiateUpload = async (fileName: string, fileType: string, fileSize: number) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/multipart-upload/generate-upload-id`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: fileName,
+        fileType: fileType,
+        fileSize: fileSize,
+      }),
+    })
+
+    // response가 ok가 아니라면
+    if (!response.ok) {
+      throw new Error('Faile to initiate multipart upload')
+    }
+
+    return await response.json()
+  }
+
+  /**
+   * [API 2 + S3] 파일 파트들을 병렬로 업로드
+   */
+  const uploadFileParts = async (file: File, uploadId: string, fileName: string): Promise<PartETag[]> => {
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
+    const uploadPromises: Promise<PartETag>[] = []
+
+    for (let i = 0; i < totalChunks; i++) {
+      const partNumber = i + 1
+      const start = i * CHUNK_SIZE
+      const end = Math.min(start + CHUNK_SIZE, file.size)
+      const blob = file.slice(start, end)
+
+      const promise = (async () => {
+        try {
+          // 2a. Get Presigned URL from our server
+          const presignedUrl = await getPresignedUrl(uploadId, fileName, partNumber);
+          // 2b. Upload part directly to S3
+          const etag = await uploadPartToS3(presignedUrl, blob)
+
+          return { partNumber: partNumber, eTag: etag }
+        } catch (partError) {
+          throw new Error(`Part ${partNumber} failed to upload`)
+        }
+      })();
+      uploadPromises.push(promise)
+    }
+
+    const partETags = await Promise.all(uploadPromises)
+    return partETags.sort((a, b) => a.partNumber - b.partNumber)
+  };
+
+  /**
+   * [API 2 Helper] Presigned URL을 요청하는 API (백엔드 구현 필요)
+   */
+  const getPresignedUrl = async (uploadId: string, fileName: string, partNumber: number): Promise<string> => {
+    // 이 API 경로는 S3 멀티파트 표준을 따르기 위해 가정된 경로입니다.
+    const response = await fetch(`${API_BASE_URL}/api/v1/multipart-upload/presigned-url`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uploadId: uploadId,
+        fileName: fileName,
+        partNumber: partNumber,
+      }),
+    })
+    if (!response.ok) {
+      throw new Error(`Failed to get Presigned URL for part ${partNumber}`)
+    }
+    return await response.text()
+  };
+
+  /**
+   * [S3 Helper] Presigned URL로 실제 Blob 데이터를 PUT
+   */
+  const uploadPartToS3 = async (presignedUrl: string, blob: Blob): Promise<string> => {
+    const response = await fetch(presignedUrl, {
+      method: 'PUT',
+      body: blob,
+    });
+    if (!response.ok) {
+      throw new Error('S3 part upload failed')
+    }
+    const etag = response.headers.get('ETag')
+    if (!etag) {
+      throw new Error('ETag not found in S3 response')
+    }
+
+    return etag.replace(/"/g, '')
+  }
+
+  /**
+   * [API 3] Spring 서버에 업로드 완료를 알림 (백엔드 구현 필요)
+   */
+  const completeUpload = async (uploadId: string, fileName: string, parts: PartETag[], articleId: number, fileSize: number, originFileName: string, fileStatus: string) => {
+    // 이 API 경로는 S3 멀티파트 표준을 따르기 위해 가정된 경로입니다.
+    const response = await fetch(`${API_BASE_URL}/api/v1/multipart-upload/complete-upload`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uploadId: uploadId,
+        fileName: fileName,
+        parts: parts,
+        articleId: articleId,
+        fileSize: fileSize,
+        originFileName: originFileName,
+        fileStatus: fileStatus,
+      }),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to complete upload')
     }
   }
 
