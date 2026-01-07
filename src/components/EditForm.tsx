@@ -148,6 +148,28 @@ export function EditForm() {
     if (!validateForm()) return
     setIsSubmitting(true)
     try {
+      // 1단계: 파일이 있다면 먼저 S3 업로드 진행
+      let uploadedFileMetas: any[] = [];
+      
+      if (formData.files.length > 0) {
+        try {
+          // 기존 파일은 제외하고, '새로 추가된 파일(File 객체)'만 필터링 필요할 수 있음
+          // 여기서는 formData.files가 모두 새로 업로드해야 하는 File 객체라고 가정
+          const uploadPromises = formData.files.map(file => 
+            // id는 아직 승인 전이므로 문맥상 필요 없을 수도 있지만, API 스펙에 맞춰 전달
+            uploadSingleFile(file, id!) 
+          );
+          
+          // 병렬로 업로드하고 결과를 받아서 배열로 만듦
+          uploadedFileMetas = await Promise.all(uploadPromises);
+          console.log('최종 업로드된 파일 리스트: ', uploadedFileMetas)
+          
+        } catch (error) {
+          alert('파일 업로드 중 오류가 발생했습니다. 요청을 중단합니다.');
+          setIsSubmitting(false);
+          return; // 파일 실패 시 게시글 수정 요청도 보내지 않음
+        }
+      }
       // request 객체 생성
       const requestPayload = {
         title: formData.title,
@@ -161,6 +183,8 @@ export function EditForm() {
         tempPassword: formData.password,
         documentTypeId: documentTypeMap[formData.documentType] || null,
         subjectDomainId: subjectDomainMap[formData.subjectDomain] || null,
+        originUrl: API_BASE_URL + '/api/v1/articles/' + id,
+        newFiles: uploadedFileMetas
       }
       
       const json = JSON.stringify(requestPayload);
@@ -172,19 +196,7 @@ export function EditForm() {
       })
       
       if (res.ok) {
-        const responseData = await res.json()
-        const articleId = responseData.data
-
-        const uploadPromises = formData.files.map(file => uploadSingleFile(file, articleId))
-
-        try {
-          await Promise.all(uploadPromises)
-          alert('모든 파일 업로드가 완료되었습니다!')
-        } catch (error) {
-          alert('업로드 중 하나 이상의 파일에서 오류 발생')
-        }
-
-        alert('수정 요청이 최종적으로 완료되었습니다!')
+        alert('수정 요청이 최종적으로 완료되었습니다. 관리자 승인 후 반영됩니다.')
         navigate('/search')
       } else {
         const errText = await res.text()
@@ -287,7 +299,7 @@ export function EditForm() {
     }
   }
 
-  const uploadSingleFile = async (file: File, articleId: number) => {
+  const uploadSingleFile = async (file: File, articleId: string) => {
     try {
       // --- 1. Initiate Upload ---
       // 원본 스텁의 API 경로를 사용합니다.
@@ -295,8 +307,10 @@ export function EditForm() {
       // --- 2. Upload Parts ---
       const partETags = await uploadFileParts(file, uploadId, fileName)
       // --- 3. Complete Upload ---
-      await completeUpload(uploadId, fileName, partETags, articleId, file.size, file.name, "update")
-
+      const completeFileMetaData = await completeUpload(uploadId, fileName, partETags, articleId, file.size, file.name)
+      console.log(completeFileMetaData)
+      
+      return completeFileMetaData
     } catch (error) {
       // Promise.all이 에러를 인지하도록 re-throw
       throw new Error(`Failed to upload ${file.name}`)
@@ -399,9 +413,9 @@ export function EditForm() {
   /**
    * [API 3] Spring 서버에 업로드 완료를 알림 (백엔드 구현 필요)
    */
-  const completeUpload = async (uploadId: string, fileName: string, parts: PartETag[], articleId: number, fileSize: number, originFileName: string, fileStatus: string) => {
+  const completeUpload = async (uploadId: string, fileName: string, parts: PartETag[], articleId: string, fileSize: number, originFileName: string) => {
     // 이 API 경로는 S3 멀티파트 표준을 따르기 위해 가정된 경로입니다.
-    const response = await fetch(`${API_BASE_URL}/api/v1/multipart-upload/complete-upload`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/multipart-upload/update-upload`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -411,12 +425,13 @@ export function EditForm() {
         articleId: articleId,
         fileSize: fileSize,
         originFileName: originFileName,
-        fileStatus: fileStatus,
       }),
     })
     if (!response.ok) {
       throw new Error('Failed to complete upload')
     }
+
+    return await response.json()
   }
 
   // 문서 유형 및 주제 영역 value-ID 매핑

@@ -5,7 +5,6 @@ import {
   Route,
   Navigate,
 } from 'react-router'
-import { SearchPage } from './pages/SearchPage'
 import { SearchResultsPage } from './pages/SearchResultsPage'
 import DetailPage from './pages/DetailPage'
 import EditPage from './pages/EditPage'
@@ -36,8 +35,8 @@ export function App() {
   return (
     <Router>
       <Routes>
-        {/* <Route path="/" element={<SearchPage />} /> */}
-        <Route path="/search" element={<SearchResultsPage />} />
+        {/* 최상단 루트: 검색 리스트 페이지 */}
+        <Route path="/" element={<SearchResultsPage />} />
         <Route path="/create" element={<CreateForm />} />
         <Route path="/edit/:id" element={<EditPage />} />
         <Route path="/detail/:id" element={<DetailPage />} />

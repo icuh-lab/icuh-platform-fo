@@ -123,7 +123,7 @@ export function CreateForm() {
       // 게시글이 성공적으로 만들어진다면, 첨부파일까지 요청한다.
       if (res.ok) {
         const responseData = await res.json() // data 라는 변수명으로 넘어옴
-        const articleId = responseData.data
+        const articleId = responseData.data.articleId // createArticleResponse의 응답 데이터에서 articleId를 받아옴
 
         const uploadPromises = formData.files.map(file => uploadSingleFile(file, articleId))
 
@@ -135,6 +135,7 @@ export function CreateForm() {
         }
 
         alert('등록 신청이 완료되었습니다.')
+        navigate('/search')
       } else {
         const errText = await res.text()
         alert('등록 신청에 실패했습니다.\n' + errText)

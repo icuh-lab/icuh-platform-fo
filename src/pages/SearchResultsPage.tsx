@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { useNavigate, useSearchParams, Link } from 'react-router'
 import { SearchBar } from '../components/SearchBar'
 import { SearchFilters } from '../components/SearchFilters'
 import { UnifiedSearchResults } from '../components/UnifiedSearchResults'
@@ -163,6 +163,17 @@ export function SearchResultsPage() {
   return (
     <div className="w-full py-8 px-4">
       <div className="max-w-6xl mx-auto">
+        {/* 상단 좌측 Home 이미지 링크 (SearchPage 컴포넌트 상단 역할) */}
+        <header className="w-full flex items-center justify-start mb-4">
+          <Link to="/" className="inline-flex items-center">
+            <img
+              src="/infra-dna.png" // TODO: 실제 Home 로고 이미지 경로로 교체
+              alt="홈으로 이동"
+              className="h-8 w-auto cursor-pointer"
+            />
+          </Link>
+        </header>
+
         <div className="flex justify-between items-center mb-6">
           {/* <button onClick={handleBackToSearch}className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
             ← 검색 페이지로 돌아가기
